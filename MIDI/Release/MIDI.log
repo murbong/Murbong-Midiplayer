@@ -1,8 +1,8 @@
 ﻿  MIDI.cpp
-c:\users\wc100\source\repos\murbong-midi-player\midi\midi.cpp(173): warning C4244: '=': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+c:\users\wc100\source\repos\murbong\murbong-midiplayer\midi\midi.cpp(175): warning C4244: '=': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   코드를 생성하고 있습니다.
   1 of 17 functions ( 5.9%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
     0 functions had inline decision re-evaluated but remain unchanged
   코드를 생성했습니다.
-  MIDI.vcxproj -> C:\Users\wc100\source\repos\Murbong-MIDI-Player\Release\MIDI.exe
+  MIDI.vcxproj -> C:\Users\wc100\source\repos\murbong\Murbong-Midiplayer\Release\MIDI.exe

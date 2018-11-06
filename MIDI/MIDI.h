@@ -50,14 +50,25 @@ typedef struct {
 
 
 void CALLBACK MidiOutProc(HMIDIOUT MidiOut, UINT Msg, DWORD Instance, DWORD Param1, DWORD Param2) {}
+
 int GetFileSize(FILE *p);
+
 int BinaryToNumber(BYTE * raw, int cnt);
+
 void DebugBinary(BYTE * debug, int cnt);
+
 void FileInsertByte(BYTE * raw, int cnt, FILE * fp);
+
 int ReadVLQ(BYTE * raw, int * treacklength);
+
 void Sub(BYTE * out, BYTE * word, int cnt, int * tracklength);
+
 void Midi_AllChannelSoundOff(HMIDIOUT m_DevOutHandle);
+
 void Midi_SendShortMsg(HMIDIOUT m_DevOutHandle, BYTE byteState, BYTE byteNote, BYTE byteValo);
+
 LRESULT Midi_Close(HMIDIOUT m_DevOutHandle);
+
 HMIDIOUT Midi_Open(WORD wDevsNum);
+
 void GetMIDIList(char ** list, int * listn);

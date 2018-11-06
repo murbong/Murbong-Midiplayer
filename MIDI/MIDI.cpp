@@ -7,11 +7,13 @@
 #include <conio.h>
 #include <io.h> 
 #include "MIDI.h"
+#include "tml.h"
+#include "tsf.h"
 
 #pragma warning(disable:4996)
 #pragma comment(lib, "winmm.lib")
 
-Track tracksdata[16];
+Track tracksdata[32];
 
 int main() {
 
@@ -45,8 +47,8 @@ int main() {
 	BYTE temp;
 	META meta, sys;
 	Header head;
-
 	HMIDIOUT m_DevHandle = Midi_Open(0);
+
 
 	puts("머봉이 미디 플레이어 v4.0Release");
 
@@ -69,7 +71,7 @@ int main() {
 				puts("1.ALL Inst Playing");
 				puts("2.Piano Only");
 				scanf("%d", &mode);
-			//	system("cls");
+				//	system("cls");
 				continue;
 			}
 			else if (select == 1) {
@@ -93,13 +95,13 @@ int main() {
 					}
 					else {
 
-						if (listselect > listn||listselect<0) {
+						if (listselect > listn || listselect < 0) {
 							puts("그런 번호는 없습니다.");
 							continue;
 						}
 						else {
-								strcpy(name, list[listselect]);
-								printf("%s\n", name);
+							strcpy(name, list[listselect]);
+							printf("%s\n", name);
 						}
 					}
 				}
@@ -115,7 +117,7 @@ int main() {
 
 
 			FILE *fp;
-		    fp = fopen(name, "rb");
+			fp = fopen(name, "rb");
 
 			if (fp == NULL)
 			{
@@ -125,7 +127,7 @@ int main() {
 			else {
 
 				if (m_DevHandle == NULL) { return 0; }
-				
+
 				fileEnd = GetFileSize(fp);
 				i = 0;
 				j = 0;
@@ -188,156 +190,160 @@ int main() {
 			startTime = clock();
 			curTime = startTime;
 			Timer = startTime;
+
 			processStatus = 2;
 		}//Timer Setting
 		else if (processStatus == 2) {
 
 
-				if (endCount == trackCount) {
-
-					for (i = 1; i <= trackCount; i++) {
-
-						free(tracksdata[i].trackRaw);
-						tracksdata[i].trackEnd = false;
-						printf("채널 %d 닫기 성공!\n", i);
-					}
-
-					printf("미디 닫기 성공!\n");
-					
-					processStatus = 0;//처음으로 돌아간다.
-					 
-				}
-
-				if (Timer <= clock() -0.001) {
-					curTime += 1 * (tempo*timing0TPQ);
-					Timer = clock();
-				}
+			if (endCount == trackCount) {
 
 				for (i = 1; i <= trackCount; i++) {
 
-					if (startTime + tracksdata[i].trackTime * 1000 <= curTime && tracksdata[i].trackEnd == false) {
-
-
-						Sub(&eventStatus, tracksdata[i].trackRaw, 1, &tracksdata[i].trackLength);
-
-						if ((eventStatus & 0xf0) == 0xf0) {
-							if (eventStatus == 0xff) {
-
-								Sub(&meta.type, tracksdata[i].trackRaw, 1, &tracksdata[i].trackLength);
-
-
-								meta.length = ReadVLQ(tracksdata[i].trackRaw, &tracksdata[i].trackLength);
-
-								Sub(meta.data, tracksdata[i].trackRaw, meta.length, &tracksdata[i].trackLength);
-
-
-								if (meta.type == 0x00) {}
-								else if (meta.type == 0x01) {} // text
-								else if (meta.type == 0x02) {} // copyright
-								else if (meta.type == 0x03) {} // sequence track name
-								else if (meta.type == 0x04) {} // inst name
-								else if (meta.type == 0x05) {} // lyric
-								else if (meta.type == 0x06) {} // marker
-								else if (meta.type == 0x07) {} // cue
-								else if (meta.type == 0x20) {} // midi channel
-								else if (meta.type == 0x2f) { tracksdata[i].trackEnd = true; printf("\n%d번 채널 오프\n", i); endCount++; } // end
-								else if (meta.type == 0x51) { tempo = 60000000 / BinaryToNumber(meta.data, meta.length); }
-								else if (meta.type == 0x54) {}
-								else if (meta.type == 0x58) {}
-								else if (meta.type == 0x59) {}
-								else if (meta.type == 0x7f) {}
-
-							}//0xff
-							else if (eventStatus == 0xf0 || eventStatus == 0xf7) {
-
-								sys.length = ReadVLQ(tracksdata[i].trackRaw, &tracksdata[i].trackLength);
-
-								Sub(sys.data, tracksdata[i].trackRaw, sys.length, &tracksdata[i].trackLength);
-
-
-							}//0xf0 | 0xf7
-						}//0xf0
-						else { // channel event
-							param1 = 0x00;
-							if ((eventStatus & 0x80) == 0) {
-								param1 = eventStatus;
-								eventStatus = tracksdata[i].lastEventType;
-							}
-							else {
-								Sub(&temp, tracksdata[i].trackRaw, 1, &tracksdata[i].trackLength);
-								param1 = temp;
-								tracksdata[i].lastEventType = eventStatus;
-							}
-							channel = eventStatus & 0x0f;
-
-							midiEvent = eventStatus >> 4;
-							if (midiEvent == 0x08) {
-								note = param1;
-								Sub(&vel, tracksdata[i].trackRaw, 1, &tracksdata[i].trackLength);
-								if (channel == 9) {
-									Midi_SendShortMsg(m_DevHandle, eventStatus, note, vel);
-									//	printf("\t\t\t\t\tDRUM Set : %d Vel : %d .\n", note, vel);
-								}
-								else {
-									if ((mode == 1 || mode == 2) && mode != 3) {
-										Midi_SendShortMsg(m_DevHandle, eventStatus, note + (BYTE)pitchFix, vel);
-										//		printf("Channel : %d Note : %d  Vel : %d .\n", channel + 1, note + (BYTE)pitchFix, vel);
-									}
-								}
-
-							}
-							else if (midiEvent == 0x09) {
-								note = param1;
-								Sub(&vel, tracksdata[i].trackRaw, 1, &tracksdata[i].trackLength);
-
-								if (channel == 9) {
-									Midi_SendShortMsg(m_DevHandle, eventStatus, note, vel);
-									//	printf("\t\t\t\t\tDRUM Set : %d Vel : %d !\n", note, vel);
-								}
-								else {
-									if ((mode == 1 || mode == 2) && mode != 3) {
-										Midi_SendShortMsg(m_DevHandle, eventStatus, note + (BYTE)pitchFix, vel);
-										//printf("Channel : %d Note : %d  Vel : %d !\n", channel + 1, note + (BYTE)pitchFix, vel);
-									}
-								}
-							}
-							else if (midiEvent == 0x0a) { Sub(&param2, tracksdata[i].trackRaw, 1, &tracksdata[i].trackLength); 
-							Midi_SendShortMsg(m_DevHandle, eventStatus, param1,param2);
-							}//Polyphonic aftertouch
-							else if (midiEvent == 0x0b) { Sub(&param2, tracksdata[i].trackRaw, 1, &tracksdata[i].trackLength);
-							Midi_SendShortMsg(m_DevHandle, eventStatus, param1, param2);
-							}//Control mode change
-							else if (midiEvent == 0x0c) {
-								note = param1;
-								if (mode == 1) {
-									Midi_SendShortMsg(m_DevHandle, eventStatus, note, 0);
-								}
-							}//Program change
-							else if (midiEvent == 0x0d) {
-								Midi_SendShortMsg(m_DevHandle, eventStatus, param1, 0);
-							}//afterTouch
-							else if (midiEvent == 0x0e) { Sub(&param2, tracksdata[i].trackRaw, 1, &tracksdata[i].trackLength); 
-							Midi_SendShortMsg(m_DevHandle, eventStatus, param1, param2);
-							}//pitch Controller
-							else {
-								printf("error");
-								return 0;
-							}
-
-						}//channel event end
-
-						deltaTime = ReadVLQ(tracksdata[i].trackRaw, &tracksdata[i].trackLength);
-
-						tracksdata[i].trackTime += (float)(60 * deltaTime);
-
-					}//startTime<curtime
-
+					free(tracksdata[i].trackRaw);
+					tracksdata[i].trackEnd = false;
+					printf("채널 %d 닫기 성공!\n", i);
 				}
+
+				printf("미디 닫기 성공!\n");
+
+				processStatus = 0;//처음으로 돌아간다.
+
 			}
+
+			if (Timer <= clock() - 0.001) {
+				curTime += 1 * (tempo*timing0TPQ);
+				Timer = clock();
+			}
+
+			for (i = 1; i <= trackCount; i++) {
+
+				if (startTime + tracksdata[i].trackTime * 1000 <= curTime && tracksdata[i].trackEnd == false) {
+
+
+					Sub(&eventStatus, tracksdata[i].trackRaw, 1, &tracksdata[i].trackLength);
+
+					if ((eventStatus & 0xf0) == 0xf0) {
+						if (eventStatus == 0xff) {
+
+							Sub(&meta.type, tracksdata[i].trackRaw, 1, &tracksdata[i].trackLength);
+
+
+							meta.length = ReadVLQ(tracksdata[i].trackRaw, &tracksdata[i].trackLength);
+
+							Sub(meta.data, tracksdata[i].trackRaw, meta.length, &tracksdata[i].trackLength);
+
+
+							if (meta.type == 0x00) {}
+							else if (meta.type == 0x01) {} // text
+							else if (meta.type == 0x02) {} // copyright
+							else if (meta.type == 0x03) {} // sequence track name
+							else if (meta.type == 0x04) {} // inst name
+							else if (meta.type == 0x05) {} // lyric
+							else if (meta.type == 0x06) {} // marker
+							else if (meta.type == 0x07) {} // cue
+							else if (meta.type == 0x20) {} // midi channel
+							else if (meta.type == 0x2f) { tracksdata[i].trackEnd = true; printf("\n%d번 채널 오프\n", i); endCount++; } // end
+							else if (meta.type == 0x51) { tempo = 60000000 / BinaryToNumber(meta.data, meta.length); }
+							else if (meta.type == 0x54) {}
+							else if (meta.type == 0x58) {}
+							else if (meta.type == 0x59) {}
+							else if (meta.type == 0x7f) {}
+
+						}//0xff
+						else if (eventStatus == 0xf0 || eventStatus == 0xf7) {
+
+							sys.length = ReadVLQ(tracksdata[i].trackRaw, &tracksdata[i].trackLength);
+
+							Sub(sys.data, tracksdata[i].trackRaw, sys.length, &tracksdata[i].trackLength);
+
+
+						}//0xf0 | 0xf7
+					}//0xf0
+					else { // channel event
+						param1 = 0x00;
+						if ((eventStatus & 0x80) == 0) {
+							param1 = eventStatus;
+							eventStatus = tracksdata[i].lastEventType;
+						}
+						else {
+							Sub(&temp, tracksdata[i].trackRaw, 1, &tracksdata[i].trackLength);
+							param1 = temp;
+							tracksdata[i].lastEventType = eventStatus;
+						}
+						channel = eventStatus & 0x0f;
+
+						midiEvent = eventStatus >> 4;
+						if (midiEvent == 0x08) {
+							note = param1;
+							Sub(&vel, tracksdata[i].trackRaw, 1, &tracksdata[i].trackLength);
+							if (channel == 9) {
+								Midi_SendShortMsg(m_DevHandle, eventStatus, note, vel);
+								//	printf("\t\t\t\t\tDRUM Set : %d Vel : %d .\n", note, vel);
+							}
+							else {
+								if ((mode == 1 || mode == 2) && mode != 3) {
+									Midi_SendShortMsg(m_DevHandle, eventStatus, note + (BYTE)pitchFix, vel);
+									//		printf("Channel : %d Note : %d  Vel : %d .\n", channel + 1, note + (BYTE)pitchFix, vel);
+								}
+							}
+
+						}
+						else if (midiEvent == 0x09) {
+							note = param1;
+							Sub(&vel, tracksdata[i].trackRaw, 1, &tracksdata[i].trackLength);
+
+							if (channel == 9) {
+								Midi_SendShortMsg(m_DevHandle, eventStatus, note, vel);
+								//	printf("\t\t\t\t\tDRUM Set : %d Vel : %d !\n", note, vel);
+							}
+							else {
+								if ((mode == 1 || mode == 2) && mode != 3) {
+									Midi_SendShortMsg(m_DevHandle, eventStatus, note + (BYTE)pitchFix, vel);
+									//printf("Channel : %d Note : %d  Vel : %d !\n", channel + 1, note + (BYTE)pitchFix, vel);
+								}
+							}
+						}
+						else if (midiEvent == 0x0a) {
+							Sub(&param2, tracksdata[i].trackRaw, 1, &tracksdata[i].trackLength);
+							Midi_SendShortMsg(m_DevHandle, eventStatus, param1, param2);
+						}//Polyphonic aftertouch
+						else if (midiEvent == 0x0b) {
+							Sub(&param2, tracksdata[i].trackRaw, 1, &tracksdata[i].trackLength);
+							Midi_SendShortMsg(m_DevHandle, eventStatus, param1, param2);
+						}//Control mode change
+						else if (midiEvent == 0x0c) {
+							note = param1;
+							if (mode == 1) {
+								Midi_SendShortMsg(m_DevHandle, eventStatus, note, 0);
+							}
+						}//Program change
+						else if (midiEvent == 0x0d) {
+							Midi_SendShortMsg(m_DevHandle, eventStatus, param1, 0);
+						}//afterTouch
+						else if (midiEvent == 0x0e) {
+							Sub(&param2, tracksdata[i].trackRaw, 1, &tracksdata[i].trackLength);
+							Midi_SendShortMsg(m_DevHandle, eventStatus, param1, param2);
+						}//pitch Controller
+						else {
+							printf("error");
+							return 0;
+						}
+
+					}//channel event end
+
+					deltaTime = ReadVLQ(tracksdata[i].trackRaw, &tracksdata[i].trackLength);
+
+					tracksdata[i].trackTime += (float)(60 * deltaTime);
+
+				}//startTime<curtime
+
+			}
+		}
 	}//Track Parsing
 
 
-	printf("잘끝냇네요");
+	printf("끝냅니다.");
 	system("pause");
 
 	Midi_Close(m_DevHandle);
