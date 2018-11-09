@@ -106,9 +106,43 @@ now, parse Trackdata.
 
 
 
-> 4D 54 72 6B 00 00 00 8D 00 FF 03 0E 50 69 61 6E 6F 20 54 65 6D 70 6C 61 74 65 00 FF 01 09 42 79 20 3C 4E 61 6D 65 3E 00 FF 02 1D 43 6F 70 79 72 69 67 68 74 20 C2 A9 20 3C 59 65 61 72 3E 20 62 79 20 3C 4E 61 6D 65 3E 00 FF 02 13 41 6C 6C 20 52 69 67 68 74 73 20 52 65 73 65 72 76 65 64 00 FF 01 20 47 65 6E 65 72 61 74 65 64 20 62 79 20 4E 6F 74 65 57 6F 72 74 68 79 20 43 6F 6D 70 6F 73 65 72 00 FF 59 02 00 00 00 FF 58 04 04 02 18 08 00 FF 2F 00
+> 'MTRK LENGTH TIME' FF 03 0E 50 69 61 6E 6F 20 54 65 6D 70 6C 61 74 65 00 FF 01 09 42 79 20 3C 4E 61 6D 65 3E 00 FF 02 1D 43 6F 70 79 72 69 67 68 74 20 C2 A9 20 3C 59 65 61 72 3E 20 62 79 20 3C 4E 61 6D 65 3E 00 FF 02 13 41 6C 6C 20 52 69 67 68 74 73 20 52 65 73 65 72 76 65 64 00 FF 01 20 47 65 6E 65 72 61 74 65 64 20 62 79 20 4E 6F 74 65 57 6F 72 74 68 79 20 43 6F 6D 70 6F 73 65 72 00 FF 59 02 00 00 00 FF 58 04 04 02 18 08 00 FF 2F
 
 
 
+First 1 Byte is 'Midi EVENT'. in **#MIDI reference**, Midi Event can split 3 part (META,SYS,Channel)
 
+Midi Event is 	0xFF 		,META
+
+​				0xF0 or 0xF7 ,SYS
+
+​				Anythingelse	,Channel
+
+
+
+META Type 	<-Read 1 Byte in Trackdata
+
+META Length	<-ReadVLQ(Trackdata)
+
+META Data	<- Read Length Byte in Trackdata
+
+
+
+| type |            action             |
+| :--: | :---------------------------: |
+|  00  |        Sequence Number        |
+|  01  |          Text Event           |
+|  02  |       Copyright Notice        |
+|  03  |      Sequence/Track Name      |
+|  04  |        Instrument Name        |
+|  05  |             Lyric             |
+|  06  |            Marker             |
+|  07  |           Cue Point           |
+|  20  |      MIDI Channel Prefix      |
+|  2F  |         End of Track          |
+|  51  |           Set Tempo           |
+|  54  |         SMTPE Offset          |
+|  58  |        Time Signature         |
+|  59  |         Key Signature         |
+|  7F  | Sequencer-Specific Meta-event |
 
