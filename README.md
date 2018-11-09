@@ -106,7 +106,7 @@ now, parse Trackdata.
 
 
 
-> 'MTRK LENGTH TIME' FF 03 0E 50 69 61 6E 6F 20 54 65 6D 70 6C 61 74 65 00 FF 01 09 42 79 20 3C 4E 61 6D 65 3E 00 FF 02 1D 43 6F 70 79 72 69 67 68 74 20 C2 A9 20 3C 59 65 61 72 3E 20 62 79 20 3C 4E 61 6D 65 3E 00 FF 02 13 41 6C 6C 20 52 69 67 68 74 73 20 52 65 73 65 72 76 65 64 00 FF 01 20 47 65 6E 65 72 61 74 65 64 20 62 79 20 4E 6F 74 65 57 6F 72 74 68 79 20 43 6F 6D 70 6F 73 65 72 00 FF 59 02 00 00 00 FF 58 04 04 02 18 08 00 FF 2F
+> FF 03 0E 50 69 61 6E 6F 20 54 65 6D 70 6C 61 74 65 00 FF 01 09 42 79 20 3C 4E 61 6D 65 3E 00 FF 02 1D 43 6F 70 79 72 69 67 68 74 20 C2 A9 20 3C 59 65 61 72 3E 20 62 79 20 3C 4E 61 6D 65 3E 00 FF 02 13 41 6C 6C 20 52 69 67 68 74 73 20 52 65 73 65 72 76 65 64 00 FF 01 20 47 65 6E 65 72 61 74 65 64 20 62 79 20 4E 6F 74 65 57 6F 72 74 68 79 20 43 6F 6D 70 6F 73 65 72 00 FF 59 02 00 00 00 FF 58 04 04 02 18 08 00 FF 2F
 
 
 
@@ -120,15 +120,17 @@ Midi Event is 	0xFF 		,META
 
 
 
-META Type 	<-Read 1 Byte in Trackdata
+`META Type 	<-Read 1 Byte in Trackdata`
 
-META Length	<-ReadVLQ(Trackdata)
+`META Length	<-ReadVLQ(Trackdata)`
 
-META Data	<- Read Length Byte in Trackdata
+`META Data	<- Read Length Byte in Trackdata`
 
 
 
-| type |            action             |
+## META List
+
+| Type |            Action             |
 | :--: | :---------------------------: |
 |  00  |        Sequence Number        |
 |  01  |          Text Event           |
@@ -145,4 +147,96 @@ META Data	<- Read Length Byte in Trackdata
 |  58  |        Time Signature         |
 |  59  |         Key Signature         |
 |  7F  | Sequencer-Specific Meta-event |
+
+`Tempo	<-60000000 /META Data`
+
+
+
+Sysex event is unrelated Event. so read and skip.
+
+
+
+`Sysex Length	<-ReadVLQ(Trackdata)`
+
+`Sysex Data	<- Read Length Byte in Trackdata`
+
+
+
+It is now the last, the Channel Event.
+
+Midi Event is not 0xF0~0xFF, You can parse Midi Event to Channel Event.
+
+but you know? Midi Event can be omitted. so you have to preprocess it.
+
+`if Midi Evnet & 0x80 is 0`
+
+`Parameter 	<- Midi Event`
+
+`Midi Event	<-Tracks Last Event`
+
+`else`
+
+`Parameter	<- Read 1 Byte in Trackdata`
+
+`Tracks Last Event	<- Midi Event`
+
+`endif`
+
+And
+
+Channel	<- Midi Event & 0x0F
+
+Event	<- Midi Event >> 4
+
+
+
+## MIDI Event List
+
+| Event |                 Action                  |
+| :---: | :-------------------------------------: |
+|   8   |                Note off                 |
+|   9   |                 Note on                 |
+|   A   |         Polyphonic Key Pressure         |
+|   B   |  Controller Change(pedal, slider, etc)  |
+|   C   | Program Change(Set Instrument or sound) |
+|   D   |          Channel Key Pressure           |
+|   E   |               Pitch Bend                |
+
+
+
+`if Event is 8`
+
+`Note	<- Parameter`
+
+`Midi Stop(Channel,Note)`
+
+
+
+`if Event is 9`
+
+`Note	<- Parameter`
+
+`Velocity	<- Read 1 Byte in Trackdata`
+
+`Midi Play(Channel,Note,Velocity)`
+
+
+
+`if Event is A,B,E`
+
+`Parameter2 <- Read 1 Byte in Trackdata`
+
+`Midi Event(Channel,Event,Parameter1,Parameter2)`
+
+`if Event is C,D`
+
+`Midi Event(Channel,Event,Parameter1,0)`
+
+
+
+`And deltaTime = ReadVLQ(TrackData)`
+
+`TrackData[loop] += 60*deltaTime/Tempo*TickPerQuotes`
+
+
 
