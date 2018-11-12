@@ -9,6 +9,9 @@
 #include "MIDI.h"
 #include "tml.h"
 #include "tsf.h"
+#define HEADER_PARSE 0
+#define INITIALIZING 1
+#define TRACK_PARSE 2
 
 #pragma warning(disable:4996)
 #pragma comment(lib, "winmm.lib")
@@ -18,7 +21,6 @@ Track tracksdata[32];
 int main() {
 
 	//Initializing
-	int sequence = 0;
 	char * list[1000];
 	char name[256];
 
@@ -27,7 +29,7 @@ int main() {
 	int pitchFix = 0;
 	int mode = 1;
 	int select = 0;
-	int processStatus = 0;
+	int processStatus = HEADER_PARSE;
 
 	int tempo = 180;
 	int i = 0, j = 0;
@@ -50,24 +52,24 @@ int main() {
 	HMIDIOUT m_DevHandle = Midi_Open(0);
 
 
-	puts("¸ÓºÀÀÌ ¹Ìµğ ÇÃ·¹ÀÌ¾î v4.0Release");
+	puts("ë¨¸ë´‰ì´ ë¯¸ë”” í”Œë ˆì´ì–´ v4.0Release");
 
 	while (true) {
 
-		if (processStatus == 0) {
+		if (processStatus == HEADER_PARSE) {
 
 			system("cls");
-			puts("\n¿øÇÏ´Â ¸í·ÉÀ» ¼±ÅÃ");
-			puts("1. µğ·ºÅä¸® Å½»öÇÏ±â");
-			puts("2. ¸ğµå ¼³Á¤ÇÏ±â");
-			puts("3. ³¡³»±â");
+			puts("\nì›í•˜ëŠ” ëª…ë ¹ì„ ì„ íƒ");
+			puts("1. ë””ë ‰í† ë¦¬ íƒìƒ‰í•˜ê¸°");
+			puts("2. ëª¨ë“œ ì„¤ì •í•˜ê¸°");
+			puts("3. ëë‚´ê¸°");
 
 			scanf("%d", &select);
 
 			getchar();
 
 			if (select == 2) {
-				puts("¿øÇÏ´Â ¸ğµå ¼³Á¤");
+				puts("ì›í•˜ëŠ” ëª¨ë“œ ì„¤ì •");
 				puts("1.ALL Inst Playing");
 				puts("2.Piano Only");
 				scanf("%d", &mode);
@@ -75,7 +77,7 @@ int main() {
 				continue;
 			}
 			else if (select == 1) {
-				puts("°Ë»öÁß");
+				puts("ê²€ìƒ‰ì¤‘");
 				system("cls");
 				GetMIDIList(list, &listn);
 
@@ -83,20 +85,20 @@ int main() {
 					continue;
 				}
 				else {
-					puts("½ÇÇàÇÏ°í ½ÍÀº ¹øÈ£¸¦ ¼±ÅÃ");
-					puts("0À» ¼±ÅÃÇÏ¸é Ãë¼ÒµË´Ï´Ù.");
+					puts("ì‹¤í–‰í•˜ê³  ì‹¶ì€ ë²ˆí˜¸ë¥¼ ì„ íƒ");
+					puts("0ì„ ì„ íƒí•˜ë©´ ì·¨ì†Œë©ë‹ˆë‹¤.");
 					scanf("%d", &listselect);
 
 					getchar();
 
 					if (listselect == 0) {
-						puts("½ÇÇà Ãë¼Ò");
+						puts("ì‹¤í–‰ ì·¨ì†Œ");
 						continue;
 					}
 					else {
 
 						if (listselect > listn || listselect < 0) {
-							puts("±×·± ¹øÈ£´Â ¾ø½À´Ï´Ù.");
+							puts("ê·¸ëŸ° ë²ˆí˜¸ëŠ” ì—†ìŠµë‹ˆë‹¤.");
 							continue;
 						}
 						else {
@@ -107,11 +109,11 @@ int main() {
 				}
 			}
 			else if (select == 3) {
-				puts("¹ÌµğÇÃ Á¾·á");
+				puts("ë¯¸ë””í”Œ ì¢…ë£Œ");
 				break;
 			}
 			else {
-				puts("Àß¸øµÈ ¸í·É");
+				puts("ì˜ëª»ëœ ëª…ë ¹");
 				continue;
 			}
 
@@ -121,7 +123,7 @@ int main() {
 
 			if (fp == NULL)
 			{
-				puts("ÀĞ±â ½ÇÆĞ!!");
+				puts("ì½ê¸° ì‹¤íŒ¨!!");
 				continue;
 			}
 			else {
@@ -185,7 +187,7 @@ int main() {
 				processStatus = 1;
 			}
 		}//Header Parsing
-		else if (processStatus == 1) {
+		else if (processStatus == INITIALIZING) {
 			endCount = 0;
 			startTime = clock();
 			curTime = startTime;
@@ -193,7 +195,7 @@ int main() {
 
 			processStatus = 2;
 		}//Timer Setting
-		else if (processStatus == 2) {
+		else if (processStatus == TRACK_PARSE) {
 
 
 			if (endCount == trackCount) {
@@ -202,12 +204,12 @@ int main() {
 
 					free(tracksdata[i].trackRaw);
 					tracksdata[i].trackEnd = false;
-					printf("Ã¤³Î %d ´İ±â ¼º°ø!\n", i);
+					printf("ì±„ë„ %d ë‹«ê¸° ì„±ê³µ!\n", i);
 				}
 
-				printf("¹Ìµğ ´İ±â ¼º°ø!\n");
+				printf("ë¯¸ë”” ë‹«ê¸° ì„±ê³µ!\n");
 
-				processStatus = 0;//Ã³À½À¸·Î µ¹¾Æ°£´Ù.
+				processStatus = HEADER_PARSE;//ì²˜ìŒìœ¼ë¡œ ëŒì•„ê°„ë‹¤.
 
 			}
 
@@ -243,7 +245,7 @@ int main() {
 							else if (meta.type == 0x06) {} // marker
 							else if (meta.type == 0x07) {} // cue
 							else if (meta.type == 0x20) {} // midi channel
-							else if (meta.type == 0x2f) { tracksdata[i].trackEnd = true; printf("\n%d¹ø Ã¤³Î ¿ÀÇÁ\n", i); endCount++; } // end
+							else if (meta.type == 0x2f) { tracksdata[i].trackEnd = true; printf("\n%dë²ˆ ì±„ë„ ì˜¤í”„\n", i); endCount++; } // end
 							else if (meta.type == 0x51) { tempo = 60000000 / BinaryToNumber(meta.data, meta.length); }
 							else if (meta.type == 0x54) {}
 							else if (meta.type == 0x58) {}
@@ -343,7 +345,7 @@ int main() {
 	}//Track Parsing
 
 
-	printf("³¡³À´Ï´Ù.");
+	printf("ëëƒ…ë‹ˆë‹¤.");
 	system("pause");
 
 	Midi_Close(m_DevHandle);
@@ -361,7 +363,7 @@ void GetMIDIList(char ** list, int * listn) {
 	FILE_SEARCH file_search;
 
 	if ((h_file = _findfirst(".\\*.mid", &file_search)) == -1L) {
-		printf("¾Æ¹«°Íµµ ¾ø¾î¿ë\n");
+		printf("ì•„ë¬´ê²ƒë„ ì—†ì–´ìš©\n");
 		*listn = 0;
 	}
 	else {
