@@ -183,9 +183,9 @@ Sysex 이벤트는 Midi 신디사이저에 사용되는 코드이므로, 스킵�
 
 그리고
 
-Channel	<- Midi Event & 0x0F
+`Channel	<- Midi Event & 0x0F`
 
-Event	<- Midi Event >> 4
+`Event	<- Midi Event >> 4`
 
 
 
