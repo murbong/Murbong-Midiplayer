@@ -7,34 +7,39 @@
 #include <conio.h>
 #include <io.h> 
 #include "MIDI.h"
-#include "tml.h"
-#include "tsf.h"
+
+
 #define HEADER_PARSE 0
 #define INITIALIZING 1
 #define TRACK_PARSE 2
+#define MAX_FILENAME_SIZE 256
+#define MAX_FILE_LIST 1024
+#define MAX_TRACKDATA 64
 
 #pragma warning(disable:4996)
 #pragma comment(lib, "winmm.lib")
 
-Track tracksdata[32];
+static Track tracksdata[MAX_TRACKDATA];
 
 int main() {
 
 	//Initializing
-	char * list[1000];
-	char name[256];
+	char * list[MAX_FILE_LIST];
+	char name[MAX_FILENAME_SIZE]; // All 
 
-	char KeyInput = 0;
 	int listselect, listn;
 	int pitchFix = 0;
+	int tempoFix = 0;
 	int mode = 1;
+	int fontmode = 0;
 	int select = 0;
 	int processStatus = HEADER_PARSE;
+
 
 	int tempo = 180;
 	int i = 0, j = 0;
 	int fileEnd;
-	int timeDivision, timingFormat, timing0TPQ;
+	int timeDivision, timingFormat, timingTPQ;
 	int trackCount;
 	double deltaTime;
 	double curTime;
@@ -49,16 +54,37 @@ int main() {
 	BYTE temp;
 	META meta, sys;
 	Header head;
+
+	BYTE MKey[] = {
+		'1','1','2','2','3',//미
+		'4','4','5','5','6','6','7',//시
+		'8','8','9','9','0',
+		'q','q','w','w','e','e','r',
+		't','t','y','y','u',
+		'i','i','o','o','p','p','a',
+		's','s','d','d','f',
+		'g','g','h','h','j','j','k',
+		'l','l','z','z','x',
+		'c','c','v','v','b','b','n',
+		'm' };
+
+	INPUT input[2] = { 0, };
+	input[0].type = input[1].type = INPUT_KEYBOARD;
+	input[0].ki.dwExtraInfo = input[1].ki.dwExtraInfo = GetMessageExtraInfo();
+
+	BYTE NoteSharp[] = { 37,49,61,73,85,39,51,63,75,87,42,54,66,78,90,44,56,68,80,92,46,58,70,82,94 };
+	int Shift = 0;
+
 	HMIDIOUT m_DevHandle = Midi_Open(0);
 
 
-	puts("머봉이 미디 플레이어 v4.0Release");
 
 	while (true) {
 
 		if (processStatus == HEADER_PARSE) {
 
 			system("cls");
+			puts("머봉이 미디 플레이어 v4.0Release");
 			puts("\n원하는 명령을 선택");
 			puts("1. 디렉토리 탐색하기");
 			puts("2. 모드 설정하기");
@@ -67,19 +93,10 @@ int main() {
 			scanf("%d", &select);
 
 			getchar();
-
-			if (select == 2) {
-				puts("원하는 모드 설정");
-				puts("1.ALL Inst Playing");
-				puts("2.Piano Only");
-				scanf("%d", &mode);
-				//	system("cls");
-				continue;
-			}
-			else if (select == 1) {
+			if (select == 1) {
 				puts("검색중");
 				system("cls");
-				GetMIDIList(list, &listn);
+				GetFILEList(list, &listn, "*.mid");
 
 				if (listn == 0) {
 					continue;
@@ -107,6 +124,14 @@ int main() {
 						}
 					}
 				}
+			}
+			else if (select == 2) { 
+				puts("원하는 모드 설정");
+				puts("1.Playing MIDI");
+				puts("2.Piano Player");
+				scanf("%d", &mode);
+				
+				continue;
 			}
 			else if (select == 3) {
 				puts("미디플 종료");
@@ -152,7 +177,7 @@ int main() {
 						timingFormat = timeDivision >> 15;
 
 						if (timingFormat == 0) {
-							timing0TPQ = (timeDivision & 0x7fff);
+							timingTPQ = (timeDivision & 0x7fff);
 						}
 						else if (timingFormat == 1) {}
 
@@ -184,19 +209,57 @@ int main() {
 						i++;
 					}
 				}
-				processStatus = 1;
+				processStatus = INITIALIZING;
 			}
 		}//Header Parsing
 		else if (processStatus == INITIALIZING) {
+
+		system("cls");
+		puts("ESC를 누르면 초기화면으로 돌아갑니다.");
+		puts("+,- 반음 올리기, 내리기 9,6 템포 10 올리기, 내리기");
+
 			endCount = 0;
 			startTime = clock();
 			curTime = startTime;
 			Timer = startTime;
-
-			processStatus = 2;
+			pitchFix = 0;
+			tempoFix = 0;
+			processStatus = TRACK_PARSE;
 		}//Timer Setting
 		else if (processStatus == TRACK_PARSE) {
 
+
+			if (kbhit())
+			{
+				int key = getch();
+
+				if (key == '+') {
+					pitchFix++;
+					printf("Pitch++	PitchFix : %d\n", pitchFix);
+					Midi_AllChannelSoundOff(m_DevHandle);
+				}
+				else if (key == '-') {
+
+					pitchFix--;
+					printf("Pitch--	PitchFix : %d\n",pitchFix);
+					Midi_AllChannelSoundOff(m_DevHandle);
+				}
+				else if (key == '9'){
+					tempoFix +=10;
+					printf("Tempo+=10		Tempo : %d\n", tempo+tempoFix);
+				}
+				else if (key == '6') {
+
+					tempoFix -= 10;
+					printf("Tempo-=10		Tempo : %d\n", tempo + tempoFix);
+				}
+				else if (key == 27) {//ESC Key
+				
+					endCount = trackCount;
+				}
+
+
+			}
 
 			if (endCount == trackCount) {
 
@@ -210,11 +273,11 @@ int main() {
 				printf("미디 닫기 성공!\n");
 
 				processStatus = HEADER_PARSE;//처음으로 돌아간다.
-
+				Midi_AllChannelSoundOff(m_DevHandle);
 			}
 
 			if (Timer <= clock() - 0.001) {
-				curTime += 1 * (tempo*timing0TPQ);
+				curTime += 1 * ((tempo + tempoFix )*timingTPQ);
 				Timer = clock();
 			}
 
@@ -245,8 +308,10 @@ int main() {
 							else if (meta.type == 0x06) {} // marker
 							else if (meta.type == 0x07) {} // cue
 							else if (meta.type == 0x20) {} // midi channel
-							else if (meta.type == 0x2f) { tracksdata[i].trackEnd = true; printf("\n%d번 채널 오프\n", i); endCount++; } // end
-							else if (meta.type == 0x51) { tempo = 60000000 / BinaryToNumber(meta.data, meta.length); }
+							else if (meta.type == 0x2f) { tracksdata[i].trackEnd = true; printf("%d번 채널 오프\n", i); endCount++; } // end
+							else if (meta.type == 0x51) { tempo = 60000000 / BinaryToNumber(meta.data, meta.length); 
+							printf("Tempo Changed	:	%d\n", tempo + tempoFix);
+							}
 							else if (meta.type == 0x54) {}
 							else if (meta.type == 0x58) {}
 							else if (meta.type == 0x59) {}
@@ -276,17 +341,18 @@ int main() {
 						channel = eventStatus & 0x0f;
 
 						midiEvent = eventStatus >> 4;
+
 						if (midiEvent == 0x08) {
 							note = param1;
 							Sub(&vel, tracksdata[i].trackRaw, 1, &tracksdata[i].trackLength);
 							if (channel == 9) {
 								Midi_SendShortMsg(m_DevHandle, eventStatus, note, vel);
-								//	printf("\t\t\t\t\tDRUM Set : %d Vel : %d .\n", note, vel);
+								    printf("\t\t\t\t\tDRUM Set : %d Vel : %d Off\n", note, vel);
 							}
 							else {
 								if ((mode == 1 || mode == 2) && mode != 3) {
 									Midi_SendShortMsg(m_DevHandle, eventStatus, note + (BYTE)pitchFix, vel);
-									//		printf("Channel : %d Note : %d  Vel : %d .\n", channel + 1, note + (BYTE)pitchFix, vel);
+									printf("Channel : %d Note : %d  Vel : %d Off\n", channel + 1, note + (BYTE)pitchFix, vel);
 								}
 							}
 
@@ -297,12 +363,12 @@ int main() {
 
 							if (channel == 9) {
 								Midi_SendShortMsg(m_DevHandle, eventStatus, note, vel);
-								//	printf("\t\t\t\t\tDRUM Set : %d Vel : %d !\n", note, vel);
+								printf("\t\t\t\t\tDRUM Set : %d Vel : %d On\n", note, vel);
 							}
 							else {
 								if ((mode == 1 || mode == 2) && mode != 3) {
 									Midi_SendShortMsg(m_DevHandle, eventStatus, note + (BYTE)pitchFix, vel);
-									//printf("Channel : %d Note : %d  Vel : %d !\n", channel + 1, note + (BYTE)pitchFix, vel);
+									printf("Channel : %d Note : %d  Vel : %d On\n", channel + 1, note + (BYTE)pitchFix, vel);
 								}
 							}
 						}
@@ -344,8 +410,6 @@ int main() {
 		}
 	}//Track Parsing
 
-
-	printf("끝냅니다.");
 	system("pause");
 
 	Midi_Close(m_DevHandle);
@@ -356,13 +420,13 @@ int main() {
 
 
 
-void GetMIDIList(char ** list, int * listn) {
+void GetFILEList(char ** list, int * listn, const char *type) {
 
 	long h_file;
 	int i = 0;
 	FILE_SEARCH file_search;
 
-	if ((h_file = _findfirst(".\\*.mid", &file_search)) == -1L) {
+	if ((h_file = _findfirst(type, &file_search)) == -1L) {
 		printf("아무것도 없어용\n");
 		*listn = 0;
 	}
@@ -458,7 +522,6 @@ void DebugBinary(BYTE * debug, int cnt) {
 
 void Sub(BYTE * out, BYTE * word, int cnt, int * tracklength)
 {
-	//int i;
 	if ((*tracklength) < cnt) return;
 
 	memcpy(out, word, cnt);
@@ -466,13 +529,12 @@ void Sub(BYTE * out, BYTE * word, int cnt, int * tracklength)
 	memcpy(word, word + cnt, *tracklength);
 }
 
-
 int GetFileSize(FILE *p) {
 	int end;
 
-	fseek(p, 0l, 2);
-	end = ftell(p);
-	fseek(p, 0l, 0);
+	fseek(p, 0l, SEEK_END);//파일 끝으로 감
+	end = ftell(p);// 사이즈 얻기
+	fseek(p, 0l, SEEK_SET);//다시 처음으로
 
 	return end;
 }
@@ -517,5 +579,3 @@ int ReadVLQ(BYTE * raw, int * tracklength) {
 	}
 	return res;
 }
-
-
