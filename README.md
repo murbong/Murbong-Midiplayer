@@ -16,7 +16,7 @@
 
 > 2년전 조회수 7000을 기록한 유튜브 영상 https://youtu.be/X46nYrrEdeU
 
-![그림1](C:\Users\wc100\Pictures\그림1.png)
+![그림1](https://github.com/murbong/Murbong-Midiplayer/blob/master/image/그림1.png)
 
 ### 기능 설명
 
@@ -26,11 +26,11 @@
 
 > 현재 디렉토리의 모든 .mid 파일을 배열로 가져온다.
 
-![list](C:\Users\wc100\Pictures\list.PNG)
+![list](https://github.com/murbong/Murbong-Midiplayer/blob/master/image/list.PNG)
 
 > Play 하고 싶은 번호를 누르면 파일이 로드되면서 미디를 분석한다.
 
-![tempo](C:\Users\wc100\Pictures\tempo.PNG)
+![tempo](https://github.com/murbong/Murbong-Midiplayer/blob/master/image/tempo.PNG)
 
 > 실행도중 +,-,9,6을 누르면 미디 파일 높낮이, 템포를 변경할 수 있다.
 
@@ -40,7 +40,7 @@
 
 > 자세한 MIDI File Structure는 https://github.com/murbong/Murbong-Midiplayer/blob/master/document/midi.md 를 참조해주세요.
 
-![status](C:\Users\wc100\Pictures\status.PNG)
+![status](https://github.com/murbong/Murbong-Midiplayer/blob/master/image/status.PNG)
 
 작업은 세 가지로 나눠진다.
 
@@ -121,11 +121,11 @@ C에는 GC(Garbage Collector)가 없기에, 모든 메모리는 누수를 막기
 
 몇번의 버전 업 끝에 가독성 강화와 버그 해결로 다른 오픈소스(java) 미디 플레이어보다 빠른 성능, 음 높낮이 조절, 여러가지 모드 등을 탑재했다.
 
-![goto](C:\Users\wc100\Pictures\goto.PNG)
+![goto](https://github.com/murbong/Murbong-Midiplayer/blob/master/image/goto.PNG)
 
 > goto문으로 인해 코드의 순서를 모르는 상황. 순서가 뒤죽박죽이고 보기에도 힘들다.
 
-![wha!](C:\Users\wc100\Pictures\wha!.PNG)
+![wha!](https://github.com/murbong/Murbong-Midiplayer/blob/master/image/wha!.PNG)
 
 > goto를 while로 바꾼뒤, 작업 순서를 DEFINE 하여 가독성이 좋게 처리되었다.
 
