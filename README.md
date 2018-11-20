@@ -38,7 +38,7 @@
 
 ## 소스 코드
 
-> 자세한 MIDI File Structure는 https://github.com/murbong/Murbong-Midiplayer/blob/master/README.md 를 참조해주세요.
+> 자세한 MIDI File Structure는 https://github.com/murbong/Murbong-Midiplayer/blob/master/document/midi.md 를 참조해주세요.
 
 ![status](C:\Users\wc100\Pictures\status.PNG)
 
