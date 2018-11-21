@@ -38,7 +38,7 @@
 
 ## 소스 코드
 
-> 자세한 MIDI File Structure는 document/midi.md 를 참조해주세요.
+> 자세한 MIDI File Structure는 [document/midi.md](document/midi.md) 를 참조해주세요.
 
 ![status](image/status.PNG)
 
